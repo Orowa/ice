@@ -22,11 +22,11 @@ async def debate(question: str = "Should we ban guns?", number_of_turns: int = 8
     while turns_left > 0:
         for agent, name in zip(agents, agent_names):
             prompt = render_debate_prompt(name, debate_history, turns_left)
-            answer = await agent.answer(prompt=prompt, multiline=False)
+            answer = await agent.complete(prompt=prompt, stop="\n")
             debate_history.append((name, answer.strip('" ')))
             turns_left -= 1
     judgment_prompt = judge_debate_prompt(debate_history)
-    victor = await recipe.agent().answer(prompt=judgment_prompt)
+    victor = await recipe.agent().complete(prompt=judgment_prompt)
     return judgment_prompt + victor
 
 recipe.main(debate)

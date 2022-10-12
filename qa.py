@@ -43,15 +43,15 @@ async def answer(
     context: str = DEFAULT_CONTEXT, question: str = DEFAULT_QUESTION, iters: int = 5
 ) -> str:
     prompt = make_qa_prompt(context, question)
-    answer = (await recipe.agent().answer(prompt=prompt)).strip('" ')
+    answer = (await recipe.agent().complete(prompt=prompt)).strip('" ')
 
     for i in range(iters):
         prompt_plus_answer = prompt + ' ' + answer
         prompt = make_updated_prompt(prompt_plus_answer, question)
         prev_answer = answer
-        answer = (await recipe.agent().answer(prompt=prompt)).strip('" ')
+        answer = (await recipe.agent().complete(prompt=prompt)).strip('" ')
         answer_dist = levenshteinDistance(prev_answer, answer)
-        print(f"Refinement {i + 1}; Levenshtein distance: {answer_dist}")
+        print(f"Refinement {i + 1}; Levenshtein distance between previous answer and this one: {answer_dist}")
         if answer_dist < 3:
             break
 
