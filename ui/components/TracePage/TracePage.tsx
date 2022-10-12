@@ -2,6 +2,7 @@ import { Button, Collapse, Skeleton, useToast } from "@chakra-ui/react";
 import classNames from "classnames";
 import produce from "immer";
 import { isEmpty, isString, last, omit, set } from "lodash";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { CaretDown, CaretRight, ChatCenteredDots } from "phosphor-react";
 import {
@@ -60,7 +61,14 @@ interface CallInfo {
 
 type Calls = Record<string, CallInfo>;
 
-const MODEL_CALL_NAMES = ["relevance", "answer", "predict", "classify", "prompted_classify"];
+const MODEL_CALL_NAMES = [
+  "relevance",
+  "answer",
+  "predict",
+  "classify",
+  "prompted_classify",
+  "complete",
+];
 
 const TreeContext = createContext<{
   traceId: string;
@@ -824,6 +832,13 @@ export const TracePage = () => {
 
   return !traceId ? null : (
     <TreeProvider key={traceId} traceId={traceId}>
+      <Head>
+        <title>
+          {traceId && recipes[traceId]
+            ? `${recipes[traceId].title} | Interactive Composition Explorer`
+            : "Interactive Composition Explorer"}
+        </title>
+      </Head>
       <Trace traceId={traceId} />
     </TreeProvider>
   );
