@@ -24,6 +24,7 @@ except ImportError:
 
 MACHINE_AGENTS = {
     "instruct": lambda: OpenAIAgent(),
+    "instruct-stochastic": lambda: OpenAIAgent(temperature=1),
     "instruct-reasoning": lambda: OpenAIReasoningAgent(),
     "instruct-reasoning-crowd": lambda: OpenAIReasoningAgent(num_workers=8),
     "curie": lambda: OpenAIAgent(model="curie"),
