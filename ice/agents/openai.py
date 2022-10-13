@@ -13,6 +13,19 @@ from ice.utils import longest_common_prefix
 log = get_logger()
 
 
+def merge_trimmed_keys(d: dict) -> dict:
+    '''
+    For a given dictionary mapping keys to floats, return a dictionary mapping keys to floats, where the keys are trimmed and the values are summed.
+    '''
+    new_d = {}
+    for k, v in d.items():
+        k = k.strip()
+        if k in new_d:
+            new_d[k] += v
+        else:
+            new_d[k] = v
+    return new_d
+
 class OpenAIAgent(Agent):
     """An agent that uses the OpenAI API to generate answers and predictions."""
 
@@ -114,6 +127,8 @@ class OpenAIAgent(Agent):
         self, choices: tuple[str, ...], choice_prefix: str, prediction: dict[str, float]
     ) -> dict[str, float]:
         """Compute the relative probabilities of the choices based on the prediction."""
+
+        prediction = merge_trimmed_keys(prediction)
 
         def lookup_prob(choice: str):
             scores = 0.0
