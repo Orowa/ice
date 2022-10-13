@@ -12,23 +12,6 @@ log = get_logger()
 TOKEN_LIMIT = 2048
 TOKEN_QA_EXISTING = 250
 
-def get_relevance_prompt(paragraph: Paragraph, question: str) -> str:
-    return f"""
-    The following paragraph was drawn from the {paragraph.section_type} section of a paper. Answer whether the paragraph could be used to answer the question {question}.
-
-    {paragraph}
-
-    Answer (either Yes or No):
-    """
-
-async def paragraph_relevance(paragraph: Paragraph, question: str) -> float:
-    '''
-    For a given paragraph, return a number between 0 and 1 indicating how relevant it is to the question.
-    '''
-    relevance_prompt = get_relevance_prompt(paragraph, question)
-    choice_probs, _ = await recipe.agent().classify(prompt=relevance_prompt, choices=(" Yes", " No"))
-    return choice_probs.get(" Yes", 0.0)
-
 def get_comparison_prompt(a: Paragraph, b: Paragraph, question: str) -> str:
 
     return f"""
