@@ -26,15 +26,55 @@ async def paragraph_relevance(paragraph: Paragraph, question: str) -> float:
     choice_probs, _ = await recipe.agent().classify(prompt=relevance_prompt, choices=(" Yes", " No"))
     return choice_probs.get(" Yes", 0.0)
 
+async def compare_paragraph_relevance(a: Paragraph, b: Paragraph, question: str) -> int:
+    '''
+    Return 1 if a is more relevant than b, -1 if b is more relevant than a, and 0 otherwise
+    '''
+
+    compare_prompt = f"""
+    The following two paragraphs were drawn from the same paper. Answer which paragraph is more relevant to the question {question}.
+
+    Paragraph A: {a}
+
+    Paragraph B: {b}
+
+    Answer (either A or B):"""
+
+    choice_probs, _ = await recipe.agent().classify(prompt=compare_prompt, choices=(" A", " B"))
+    return 1 if choice_probs.get(" A", 0.0) > choice_probs.get(" B", 0.0) else -1
+
+async def partition_array(array: list[Paragraph], pivot: any, question: str) -> tuple[list, list]:
+    '''
+    Partition the array into two arrays, one containing elements less than the pivot and one containing elements greater than the pivot.
+    '''
+    left_array = []
+    right_array = []
+
+    left_or_right = await map_async(array, lambda p: compare_paragraph_relevance(p, pivot, question))
+    for i, p in enumerate(array):
+        if left_or_right[i] == 1:
+            left_array.append(p)
+        else:
+            right_array.append(p)
+
+    return left_array, right_array
+
 async def rank_relevant_paragraphs(paragraphs: list[Paragraph], question: str) -> list[Paragraph]:
     '''
     Sort the paragraphs in the paper by relevance to the question.
     '''
-    relevance_per_paragraph = await map_async(paragraphs, lambda p: paragraph_relevance(p, question))
-    sorted_pairs = sorted(
-        zip(paragraphs, relevance_per_paragraph), key=lambda x: x[1], reverse=True
-    )
-    return [p for p, _ in sorted_pairs]
+
+    pivot = paragraphs[len(paragraphs) // 2]
+    parapraphs_without_pivot = [p for p in paragraphs if p != pivot]
+    left_array, right_array = await partition_array(parapraphs_without_pivot, pivot, question)
+
+    if len(left_array) > 0:
+        left_array = await rank_relevant_paragraphs(left_array, question)
+    
+    if len(right_array) > 0:
+        right_array = await rank_relevant_paragraphs(right_array, question)
+
+    return left_array + [pivot] + right_array
 
 def relevant_paragraphs_to_context(relevant_paragraphs: list[Paragraph]) -> str:
     '''
