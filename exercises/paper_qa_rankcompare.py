@@ -4,7 +4,10 @@ from ice.recipe import recipe
 from exercises.qa import answer
 from ice.utils import map_async
 import numpy as np
+from structlog.stdlib import get_logger
 from transformers import GPT2TokenizerFast
+
+log = get_logger()
 
 TOKEN_LIMIT = 2048
 TOKEN_QA_EXISTING = 250
@@ -26,22 +29,37 @@ async def paragraph_relevance(paragraph: Paragraph, question: str) -> float:
     choice_probs, _ = await recipe.agent().classify(prompt=relevance_prompt, choices=(" Yes", " No"))
     return choice_probs.get(" Yes", 0.0)
 
+def get_comparison_prompt(a: Paragraph, b: Paragraph, question: str) -> str:
+
+    return f"""
+Which of paragraphs A and B better answers the question "{question}"?
+
+Paragraph A: {a}
+
+Paragraph B: {b}
+
+Question: Which of paragraphs A and B better answers the question '{question}'? Answer with "Paragraph A" or "Paragraph B".
+
+Answer: Paragraph""".strip()
+
+
 async def compare_paragraph_relevance(a: Paragraph, b: Paragraph, question: str) -> int:
     '''
     Return 1 if a is more relevant than b, -1 if b is more relevant than a, and 0 otherwise
     '''
 
-    compare_prompt = f"""
-    The following two paragraphs were drawn from the same paper. Answer which paragraph is more relevant to the question {question}.
-
-    Paragraph A: {a}
-
-    Paragraph B: {b}
-
-    Answer (either A or B):"""
-
-    choice_probs, _ = await recipe.agent().classify(prompt=compare_prompt, choices=(" A", " B"))
-    return 1 if choice_probs.get(" A", 0.0) > choice_probs.get(" B", 0.0) else -1
+    comparison_prompt = get_comparison_prompt(a, b, question)    
+    completion = await recipe.agent().complete(prompt=comparison_prompt,
+                    stop=["\n"],
+                    max_tokens=1)
+    completion = completion.strip()
+    if completion == "A":
+        return 1
+    elif completion == "B":
+        return -1
+    else:
+        log.warning(f"Unrecognized choice: {completion}")
+        return 0        
 
 async def partition_array(array: list[Paragraph], pivot: any, question: str) -> tuple[list, list]:
     '''
