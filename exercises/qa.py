@@ -23,7 +23,7 @@ def make_qa_prompt(context: str, question: str) -> str:
     return f"""
 Background text: "{context}"
 
-Answer the following question about the background text above:
+Answer the following question about the background text above. If you are uncertain, say "There is not enough information to answer this question.":
 
 Question: "{question}"
 Answer: Let's think step by step.
@@ -40,7 +40,7 @@ def make_updated_prompt(prev_response: str, original_question: str) -> str:
 
 
 async def answer(
-    context: str = DEFAULT_CONTEXT, question: str = DEFAULT_QUESTION, iters: int = 5
+    context: str = DEFAULT_CONTEXT, question: str = DEFAULT_QUESTION, iters: int = 3
 ) -> str:
     prompt = make_qa_prompt(context, question)
     answer = (await recipe.agent().complete(prompt=prompt)).strip('" ')
