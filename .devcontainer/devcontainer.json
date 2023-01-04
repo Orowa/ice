@@ -9,6 +9,8 @@
 		"ghcr.io/devcontainers-contrib/features/mypy:1": {}
 	},
 
+	"runArgs": ["--env-file",".env"],
+
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 
